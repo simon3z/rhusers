@@ -23,6 +23,7 @@ var EmployeeAttributes = []string{
 	"rhatGeo",
 	"rhatLocation",
 	"rhatCostCenterDesc",
+	"rhatRnDComponent",
 	"manager",
 }
 
@@ -40,6 +41,7 @@ type Employee struct {
 	GeoArea     string
 	Location    string
 	CostCenter  string
+	Component   string
 	ManagerMail string
 }
 
@@ -157,6 +159,7 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			GeoArea:     m["rhatGeo"],
 			Location:    m["rhatLocation"],
 			CostCenter:  m["rhatCostCenterDesc"],
+			Component:   m["rhatRnDComponent"],
 			ManagerMail: managerMail,
 		})
 	}
@@ -216,7 +219,7 @@ func main() {
 
 		if len(r) == 0 {
 			log.Printf("coudldn't find employee (uid=%s)", uid)
-			r = []*Employee{&Employee{}}
+			r = []*Employee{{}}
 		}
 
 		for _, e := range r {
@@ -226,7 +229,8 @@ func main() {
 				e.Mail,
 				e.GeoArea,
 				e.Location,
-				// e.CostCenter,
+				e.CostCenter,
+				e.Component,
 				e.ManagerMail,
 			})
 		}
