@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/ldap.v2"
+	ldap "gopkg.in/ldap.v2"
 )
 
 // EmployeeAttributes are the attributes used to fill in the employee struct
@@ -51,6 +51,14 @@ func (e *Employee) FullName() string {
 	}
 
 	return ""
+}
+
+func (e *Employee) RoverProfileLink() string {
+	if e.UserID != "" {
+		return fmt.Sprintf("https://rover.redhat.com/people/profile/%s", e.UserID)
+	}
+
+	return e.UserID
 }
 
 // LDAPService represents an ldap service to connect to and interact with
@@ -168,13 +176,15 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 }
 
 var CmdFlags = struct {
-	TabSeparated bool
-	LDAPAddress  string
-	SearchBaseDN string
+	TabSeparated  bool
+	GSheetsFormat bool
+	LDAPAddress   string
+	SearchBaseDN  string
 }{}
 
 func init() {
 	flag.BoolVar(&CmdFlags.TabSeparated, "t", false, "tab-separated output format")
+	flag.BoolVar(&CmdFlags.GSheetsFormat, "g", false, "google sheets format")
 	flag.StringVar(&CmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
 	flag.StringVar(&CmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
 }
@@ -223,9 +233,17 @@ func main() {
 		}
 
 		for _, e := range r {
+			var userId = ""
+
+			if CmdFlags.GSheetsFormat && e.UserID != "" {
+				userId = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.RoverProfileLink(), e.UserID)
+			} else {
+				userId = e.UserID
+			}
+
 			w.Write([]string{
 				e.FullName(),
-				e.UserID,
+				userId,
 				e.Mail,
 				e.GeoArea,
 				e.Location,
