@@ -1,10 +1,16 @@
-# Red Hat LDAP Users to CSV
+# Installing and Upgrading
 
-## Testing
+    $ GOBIN=~/.local/bin go get -u github.com/simon3z/rhusers
 
-    $ echo fsimonce | go run rhusers.go
+# Usage
 
-## Building and Installing
+Parameters:
 
-    $ go build
-    $ go install
+    $ rhusers -h
+    Usage of rhusers:
+      -g	google sheets format
+      -t	tab-separated output format
+
+Example:
+
+    $ echo fsimonce | rhusers -t -g
