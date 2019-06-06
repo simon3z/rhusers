@@ -24,6 +24,7 @@ var EmployeeAttributes = []string{
 	"rhatLocation",
 	"rhatCostCenterDesc",
 	"rhatRnDComponent",
+	"rhatSubproduct",
 	"manager",
 }
 
@@ -42,6 +43,7 @@ type Employee struct {
 	Location    string
 	CostCenter  string
 	Component   string
+	Subproduct  string
 	ManagerMail string
 }
 
@@ -168,6 +170,7 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			Location:    m["rhatLocation"],
 			CostCenter:  m["rhatCostCenterDesc"],
 			Component:   m["rhatRnDComponent"],
+			Subproduct:  m["rhatSubproduct"],
 			ManagerMail: managerMail,
 		})
 	}
@@ -249,6 +252,7 @@ func main() {
 				e.Location,
 				e.CostCenter,
 				e.Component,
+				e.Subproduct,
 				e.ManagerMail,
 			})
 		}
