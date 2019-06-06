@@ -178,7 +178,7 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 	return eg, nil
 }
 
-var CmdFlags = struct {
+var cmdFlags = struct {
 	TabSeparated  bool
 	GSheetsFormat bool
 	LDAPAddress   string
@@ -186,10 +186,10 @@ var CmdFlags = struct {
 }{}
 
 func init() {
-	flag.BoolVar(&CmdFlags.TabSeparated, "t", false, "tab-separated output format")
-	flag.BoolVar(&CmdFlags.GSheetsFormat, "g", false, "google sheets format")
-	flag.StringVar(&CmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
-	flag.StringVar(&CmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
+	flag.BoolVar(&cmdFlags.TabSeparated, "t", false, "tab-separated output format")
+	flag.BoolVar(&cmdFlags.GSheetsFormat, "g", false, "google sheets format")
+	flag.StringVar(&cmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
+	flag.StringVar(&cmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
 }
 
 func main() {
@@ -199,7 +199,7 @@ func main() {
 
 	w := csv.NewWriter(os.Stdout)
 
-	if CmdFlags.TabSeparated {
+	if cmdFlags.TabSeparated {
 		w.Comma = '\t'
 	}
 
@@ -208,7 +208,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = lsv.Connect("tcp", CmdFlags.LDAPAddress)
+	err = lsv.Connect("tcp", cmdFlags.LDAPAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -225,7 +225,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		r, err := lsv.SearchEmployee(CmdFlags.SearchBaseDN, fmt.Sprintf("(uid=%s)", uid))
+		r, err := lsv.SearchEmployee(cmdFlags.SearchBaseDN, fmt.Sprintf("(uid=%s)", uid))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -236,17 +236,17 @@ func main() {
 		}
 
 		for _, e := range r {
-			var userId = ""
+			var userID = ""
 
-			if CmdFlags.GSheetsFormat && e.UserID != "" {
-				userId = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.RoverProfileLink(), e.UserID)
+			if cmdFlags.GSheetsFormat && e.UserID != "" {
+				userID = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.RoverProfileLink(), e.UserID)
 			} else {
-				userId = e.UserID
+				userID = e.UserID
 			}
 
 			w.Write([]string{
 				e.FullName(),
-				userId,
+				userID,
 				e.Mail,
 				e.GeoArea,
 				e.Location,
