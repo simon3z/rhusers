@@ -22,6 +22,7 @@ var EmployeeAttributes = []string{
 	"sn",
 	"rhatPrimaryMail",
 	"rhatPreferredAlias",
+	"rhatJobTitle",
 	"rhatGeo",
 	"rhatLocation",
 	"rhatCostCenterDesc",
@@ -42,6 +43,7 @@ type Employee struct {
 	FirstName   string
 	LastName    string
 	Mail        string
+	JobTitle    string
 	GeoArea     string
 	Location    string
 	CostCenter  string
@@ -171,6 +173,7 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			FirstName:   m["displayName"],
 			LastName:    m["sn"],
 			Mail:        getPreferredMail(m),
+			JobTitle:    m["rhatJobTitle"],
 			GeoArea:     m["rhatGeo"],
 			Location:    m["rhatLocation"],
 			CostCenter:  m["rhatCostCenterDesc"],
@@ -253,6 +256,7 @@ func main() {
 				userID,
 				e.FullName(),
 				e.Mail,
+				e.JobTitle,
 				e.GeoArea,
 				e.Location,
 				e.CostCenter,
