@@ -191,6 +191,7 @@ var cmdFlags = struct {
 	GSheetsFormat bool
 	LDAPAddress   string
 	SearchBaseDN  string
+	QueryString   string
 }{}
 
 func init() {
@@ -198,6 +199,7 @@ func init() {
 	flag.BoolVar(&cmdFlags.GSheetsFormat, "g", false, "google sheets format")
 	flag.StringVar(&cmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
 	flag.StringVar(&cmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
+	flag.StringVar(&cmdFlags.QueryString, "q", "(uid={})", "ldap query string")
 }
 
 func main() {
@@ -233,7 +235,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		r, err := lsv.SearchEmployee(cmdFlags.SearchBaseDN, fmt.Sprintf("(uid=%s)", uid))
+		r, err := lsv.SearchEmployee(cmdFlags.SearchBaseDN, strings.ReplaceAll(cmdFlags.QueryString, "{}", string(uid)))
 		if err != nil {
 			log.Fatal(err)
 		}
