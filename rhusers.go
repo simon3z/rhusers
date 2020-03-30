@@ -1,5 +1,7 @@
 package main
 
+// cspell:words ldap deref rhat
+
 import (
 	"bufio"
 	"encoding/csv"
@@ -28,6 +30,7 @@ var EmployeeAttributes = []string{
 	"manager",
 }
 
+// ManagerMailAttributes are the attributes retrieved for the employee's managers
 var ManagerMailAttributes = []string{
 	"rhatPrimaryMail",
 	"rhatPreferredAlias",
@@ -47,6 +50,7 @@ type Employee struct {
 	ManagerMail string
 }
 
+// FullName returns the employee full name
 func (e *Employee) FullName() string {
 	if e.FirstName != "" && e.LastName != "" {
 		return fmt.Sprintf("%s %s", e.FirstName, e.LastName)
@@ -55,6 +59,7 @@ func (e *Employee) FullName() string {
 	return ""
 }
 
+// RoverProfileLink returns the link to the employee rover profile
 func (e *Employee) RoverProfileLink() string {
 	if e.UserID != "" {
 		return fmt.Sprintf("https://rover.redhat.com/people/profile/%s", e.UserID)
@@ -231,7 +236,7 @@ func main() {
 		}
 
 		if len(r) == 0 {
-			log.Printf("coudldn't find employee (uid=%s)", uid)
+			log.Printf("couldn't find employee (uid=%s)", uid)
 			r = []*Employee{{}}
 		}
 
