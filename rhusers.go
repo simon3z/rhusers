@@ -40,12 +40,9 @@ func main() {
 		w.Comma = '\t'
 	}
 
-	lsv, err := NewLDAPService()
-	if err != nil {
-		log.Fatal(err)
-	}
+	lsv := NewLDAPService()
+	err := lsv.Connect("tcp", cmdFlags.LDAPAddress)
 
-	err = lsv.Connect("tcp", cmdFlags.LDAPAddress)
 	if err != nil {
 		log.Fatal(err)
 	}

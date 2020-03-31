@@ -34,11 +34,14 @@ var ManagerMailAttributes = []string{
 // LDAPService represents an ldap service to connect to and interact with
 type LDAPService struct {
 	connection *ldap.Conn
+	cache      map[string]string
 }
 
 // NewLDAPService creates a new LDAPService object
-func NewLDAPService() (*LDAPService, error) {
-	return &LDAPService{}, nil
+func NewLDAPService() *LDAPService {
+	return &LDAPService{
+		cache: make(map[string]string),
+	}
 }
 
 // Connect connects the relevant LDAPService to a specific ldap server
@@ -81,6 +84,10 @@ func getPreferredMail(m map[string]string) string {
 }
 
 func (s *LDAPService) fetchManagerMail(managerUID string) (string, error) {
+	if managerMail, ok := s.cache[managerUID]; ok {
+		return managerMail, nil
+	}
+
 	search := strings.SplitN(managerUID, ",", 2)
 	if len(search) != 2 {
 		return "", fmt.Errorf("couldn't identify manager uid (%s)", managerUID)
@@ -104,7 +111,9 @@ func (s *LDAPService) fetchManagerMail(managerUID string) (string, error) {
 		return "", err
 	}
 
-	return getPreferredMail(m), nil
+	s.cache[managerUID] = getPreferredMail(m)
+
+	return s.cache[managerUID], nil
 }
 
 // SearchEmployee searches and returns employees matching the search criteria provided
