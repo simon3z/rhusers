@@ -129,11 +129,17 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			return nil, err
 		}
 
+		mail := []string{m["rhatPrimaryMail"]}
+
+		if preferredMail, ok := m["rhatPreferredAlias"]; ok {
+			mail = append([]string{preferredMail}, mail...)
+		}
+
 		eg = append(eg, &Employee{
 			UserID:      m["uid"],
 			FirstName:   m["displayName"],
 			LastName:    m["sn"],
-			Mail:        getPreferredMail(m),
+			Mail:        mail,
 			JobTitle:    m["rhatJobTitle"],
 			GeoArea:     m["rhatGeo"],
 			Location:    m["rhatLocation"],

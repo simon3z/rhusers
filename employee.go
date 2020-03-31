@@ -11,7 +11,7 @@ type Employee struct {
 	UserID      string
 	FirstName   string
 	LastName    string
-	Mail        string
+	Mail        []string
 	JobTitle    string
 	GeoArea     string
 	Location    string
@@ -37,4 +37,13 @@ func (e *Employee) RoverProfileLink() string {
 	}
 
 	return e.UserID
+}
+
+// PreferredMail returns the preferred email address
+func (e *Employee) PreferredMail() string {
+	if len(e.Mail) > 0 {
+		return e.Mail[0]
+	}
+
+	return ""
 }
