@@ -13,7 +13,6 @@ import (
 )
 
 var cmdFlags = struct {
-	TabSeparated  bool
 	GSheetsFormat bool
 	LDAPAddress   string
 	SearchBaseDN  string
@@ -21,7 +20,6 @@ var cmdFlags = struct {
 }{}
 
 func init() {
-	flag.BoolVar(&cmdFlags.TabSeparated, "t", false, "tab-separated output format")
 	flag.BoolVar(&cmdFlags.GSheetsFormat, "g", false, "google sheets format")
 	flag.StringVar(&cmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
 	flag.StringVar(&cmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
@@ -35,7 +33,7 @@ func main() {
 
 	w := csv.NewWriter(os.Stdout)
 
-	if cmdFlags.TabSeparated {
+	if cmdFlags.GSheetsFormat {
 		w.Comma = '\t'
 	}
 
