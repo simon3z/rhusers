@@ -26,6 +26,29 @@ func init() {
 	flag.StringVar(&cmdFlags.QueryString, "q", "(uid={})", "ldap query string")
 }
 
+func employeeStringSlice(e *Employee) []string {
+	userID := ""
+
+	if cmdFlags.GSheetsFormat && e.UserID != "" {
+		userID = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.RoverProfileLink(), e.UserID)
+	} else {
+		userID = e.UserID
+	}
+
+	return []string{
+		userID,
+		e.FullName(),
+		e.PreferredMail(),
+		e.JobTitle,
+		e.GeoArea,
+		e.Location,
+		e.CostCenter,
+		e.Component,
+		e.Subproduct,
+		e.ManagerMail,
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -65,26 +88,7 @@ func main() {
 		}
 
 		for _, e := range result {
-			userID := ""
-
-			if cmdFlags.GSheetsFormat && e.UserID != "" {
-				userID = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.RoverProfileLink(), e.UserID)
-			} else {
-				userID = e.UserID
-			}
-
-			w.Write([]string{
-				userID,
-				e.FullName(),
-				e.PreferredMail(),
-				e.JobTitle,
-				e.GeoArea,
-				e.Location,
-				e.CostCenter,
-				e.Component,
-				e.Subproduct,
-				e.ManagerMail,
-			})
+			w.Write(employeeStringSlice(e))
 		}
 
 		w.Flush()
