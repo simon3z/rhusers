@@ -37,32 +37,35 @@ func main() {
 		w.Comma = '\t'
 	}
 
-	lsv := NewLDAPService()
-	err := lsv.Connect("tcp", cmdFlags.LDAPAddress)
+	ldap := NewLDAPService()
 
+	err := ldap.Connect("tcp", cmdFlags.LDAPAddress)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cannot connect to ldap server:", err)
 	}
 
-	defer lsv.Disconnect()
+	defer ldap.Disconnect()
 
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for scanner.Scan() {
 		uid := scanner.Text()
 
-		r, err := lsv.SearchEmployee(cmdFlags.SearchBaseDN, strings.ReplaceAll(cmdFlags.QueryString, "{}", string(uid)))
+		query := strings.ReplaceAll(cmdFlags.QueryString, "{}", string(uid))
+		result, err := ldap.SearchEmployee(cmdFlags.SearchBaseDN, query)
+
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln("employee search failed:", err)
 		}
 
-		if len(r) == 0 {
-			log.Printf("couldn't find employee (uid=%s)", uid)
-			r = []*Employee{{}}
+		if len(result) == 0 {
+			log.Println("employee not found:", query)
+			// empty record to maintain input and output rows alignment
+			result = []*Employee{{}}
 		}
 
-		for _, e := range r {
-			var userID = ""
+		for _, e := range result {
+			userID := ""
 
 			if cmdFlags.GSheetsFormat && e.UserID != "" {
 				userID = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.RoverProfileLink(), e.UserID)

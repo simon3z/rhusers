@@ -3,6 +3,7 @@ package main
 // cspell:words rhat ldap deref
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -30,6 +31,15 @@ var ManagerMailAttributes = []string{
 	"rhatPrimaryMail",
 	"rhatPreferredAlias",
 }
+
+// ErrLDAPEntryNotFound is the error returned when the search produced no entries as result
+var ErrLDAPEntryNotFound = errors.New("no entries found")
+
+// ErrLDAPEntryTooMany is the error returned when the search produced too many entries as result
+var ErrLDAPEntryTooMany = errors.New("too many entries found")
+
+// ErrLDAPAttributesTooMany is the error returned when an entry has too many attributes
+var ErrLDAPAttributesTooMany = errors.New("too many attributes found")
 
 // LDAPService represents an ldap service to connect to and interact with
 type LDAPService struct {
@@ -66,7 +76,7 @@ func getAttributesMap(entry *ldap.Entry) (map[string]string, error) {
 
 	for _, k := range entry.Attributes {
 		if len(k.Values) > 1 {
-			return nil, fmt.Errorf("too many values (%d) for attribute (%s)", len(k.Values), k.Name)
+			return nil, fmt.Errorf("attribute %s: %w", k.Name, ErrLDAPAttributesTooMany)
 		}
 
 		m[k.Name] = k.Values[0]
@@ -90,23 +100,22 @@ func (s *LDAPService) fetchManagerMail(managerUID string) (string, error) {
 
 	search := strings.SplitN(managerUID, ",", 2)
 	if len(search) != 2 {
-		return "", fmt.Errorf("couldn't identify manager uid (%s)", managerUID)
+		return "", fmt.Errorf("manager identity %s: %w", managerUID, ErrLDAPEntryNotFound)
 	}
 
-	ls := ldap.NewSearchRequest(search[1], ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, fmt.Sprintf("(%s)", search[0]), ManagerMailAttributes, nil)
+	query := fmt.Sprintf("(%s)", search[0])
+	request := ldap.NewSearchRequest(search[1], ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, query, ManagerMailAttributes, nil)
 
-	r, err := s.connection.Search(ls)
+	response, err := s.connection.Search(request)
 	if err != nil {
 		return "", err
 	}
 
-	if len(r.Entries) == 0 {
-		return "", fmt.Errorf("couldn't find manager (%s)", managerUID)
-	} else if len(r.Entries) > 1 {
-		return "", fmt.Errorf("too many managers found (%s)", managerUID)
+	if err := checkOneLDAPEntry(response.Entries); err != nil {
+		return "", fmt.Errorf("manager search %s: %w", search, err)
 	}
 
-	m, err := getAttributesMap(r.Entries[0])
+	m, err := getAttributesMap(response.Entries[0])
 	if err != nil {
 		return "", err
 	}
@@ -120,15 +129,15 @@ func (s *LDAPService) fetchManagerMail(managerUID string) (string, error) {
 func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error) {
 	ls := ldap.NewSearchRequest(basedn, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, search, EmployeeAttributes, nil)
 
-	r, err := s.connection.Search(ls)
+	result, err := s.connection.Search(ls)
 	if err != nil {
 		return nil, err
 	}
 
 	eg := []*Employee{}
 
-	for _, i := range r.Entries {
-		m, err := getAttributesMap(i)
+	for i := range result.Entries {
+		m, err := getAttributesMap(result.Entries[i])
 		if err != nil {
 			return nil, err
 		}
@@ -138,10 +147,14 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			return nil, err
 		}
 
-		mail := []string{m["rhatPrimaryMail"]}
+		mail := []string{}
 
 		if preferredMail, ok := m["rhatPreferredAlias"]; ok {
 			mail = append([]string{preferredMail}, mail...)
+		}
+
+		if primaryMail, ok := m["rhatPrimaryMail"]; ok {
+			mail = append(mail, primaryMail)
 		}
 
 		eg = append(eg, &Employee{
@@ -160,4 +173,14 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 	}
 
 	return eg, nil
+}
+
+func checkOneLDAPEntry(entries []*ldap.Entry) error {
+	switch {
+	case len(entries) == 0:
+		return ErrLDAPEntryNotFound
+	case len(entries) > 1:
+		return ErrLDAPEntryTooMany
+	}
+	return nil
 }
