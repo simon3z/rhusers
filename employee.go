@@ -4,11 +4,22 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 )
+
+// Profile represents an user profile
+type Profile struct {
+	string
+	Link *url.URL
+}
+
+func (p Profile) String() string {
+	return p.string
+}
 
 // Employee contains all the needed information about an employee
 type Employee struct {
-	UserID      string
+	UserID      Profile
 	FirstName   string
 	LastName    string
 	Mail        []string
@@ -28,15 +39,6 @@ func (e *Employee) FullName() string {
 	}
 
 	return ""
-}
-
-// RoverProfileLink returns the link to the employee rover profile
-func (e *Employee) RoverProfileLink() string {
-	if e.UserID != "" {
-		return fmt.Sprintf("https://rover.redhat.com/people/profile/%s", e.UserID)
-	}
-
-	return e.UserID
 }
 
 // PreferredMail returns the preferred email address

@@ -5,6 +5,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
@@ -157,8 +158,17 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			mail = append(mail, primaryMail)
 		}
 
+		userid := Profile{
+			m["uid"],
+			&url.URL{
+				Scheme: "https",
+				Host:   "rover.redhat.com",
+				Path:   "/people/profile/" + m["uid"],
+			},
+		}
+
 		eg = append(eg, &Employee{
-			UserID:      m["uid"],
+			UserID:      userid,
 			FirstName:   m["displayName"],
 			LastName:    m["sn"],
 			Mail:        mail,
