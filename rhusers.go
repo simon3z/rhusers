@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"encoding/csv"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -17,6 +16,8 @@ var cmdFlags = struct {
 	LDAPAddress   string
 	SearchBaseDN  string
 	QueryString   string
+	RecordBuilder func(*Employee) []interface{}
+	RecordFormat  func([]interface{}) []string
 }{}
 
 func init() {
@@ -24,29 +25,9 @@ func init() {
 	flag.StringVar(&cmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
 	flag.StringVar(&cmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
 	flag.StringVar(&cmdFlags.QueryString, "q", "(uid={})", "ldap query string")
-}
 
-func employeeStringSlice(e *Employee) []string {
-	userID := ""
-
-	if cmdFlags.GSheetsFormat && e.UserID.Link != nil {
-		userID = fmt.Sprintf("=HYPERLINK(\"%s\",\"%s\")", e.UserID.Link, e.UserID)
-	} else {
-		userID = e.UserID.String()
-	}
-
-	return []string{
-		userID,
-		e.FullName(),
-		e.PreferredMail(),
-		e.JobTitle,
-		e.GeoArea,
-		e.Location,
-		e.CostCenter,
-		e.Component,
-		e.Subproduct,
-		e.ManagerMail,
-	}
+	cmdFlags.RecordBuilder = regularRecordBuilder
+	cmdFlags.RecordFormat = stringsRecordFormat
 }
 
 func main() {
@@ -58,6 +39,7 @@ func main() {
 
 	if cmdFlags.GSheetsFormat {
 		w.Comma = '\t'
+		cmdFlags.RecordFormat = sheetRecordFormat
 	}
 
 	ldap := NewLDAPService()
@@ -88,7 +70,7 @@ func main() {
 		}
 
 		for _, e := range result {
-			w.Write(employeeStringSlice(e))
+			w.Write(cmdFlags.RecordFormat(cmdFlags.RecordBuilder(e)))
 		}
 
 		w.Flush()
