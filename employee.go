@@ -1,6 +1,6 @@
 package main
 
-// cspell:words rhat
+// cspell:words rhat jira
 
 import (
 	"fmt"
@@ -20,6 +20,7 @@ func (p Profile) String() string {
 // Employee contains all the needed information about an employee
 type Employee struct {
 	UserID      Profile
+	JiraID      Profile
 	FirstName   string
 	LastName    string
 	Mail        []string

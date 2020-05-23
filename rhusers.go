@@ -1,6 +1,6 @@
 package main
 
-// cspell:words ldap deref rhat
+// cspell:words ldap deref rhat jira
 
 import (
 	"bufio"
@@ -16,6 +16,9 @@ var cmdFlags = struct {
 	LDAPAddress   string
 	SearchBaseDN  string
 	QueryString   string
+	JiraUsername  string
+	JiraPassword  string
+	JiraAddress   string
 	RecordBuilder func(*Employee) []interface{}
 	RecordFormat  func([]interface{}) []string
 }{}
@@ -25,6 +28,8 @@ func init() {
 	flag.StringVar(&cmdFlags.LDAPAddress, "s", "ldap.corp.redhat.com:389", "ldap server address and port")
 	flag.StringVar(&cmdFlags.SearchBaseDN, "b", "ou=users,dc=redhat,dc=com", "base dn for search queries")
 	flag.StringVar(&cmdFlags.QueryString, "q", "(uid={})", "ldap query string")
+	flag.StringVar(&cmdFlags.JiraUsername, "j", "", "jira user name")
+	flag.StringVar(&cmdFlags.JiraAddress, "z", "https://issues.redhat.com", "jira server url")
 
 	cmdFlags.RecordBuilder = regularRecordBuilder
 	cmdFlags.RecordFormat = stringsRecordFormat
@@ -51,6 +56,20 @@ func main() {
 
 	defer ldap.Disconnect()
 
+	var jira *JiraService
+
+	if cmdFlags.JiraUsername != "" {
+		cmdFlags.JiraPassword = GetPassword("Jira Password", "JIRA_PASSWORD", true)
+
+		jira, err = NewJiraClient(cmdFlags.JiraAddress, cmdFlags.JiraUsername, cmdFlags.JiraPassword)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cmdFlags.RecordBuilder = jiraRecordBuilder
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for scanner.Scan() {
@@ -70,6 +89,12 @@ func main() {
 		}
 
 		for _, e := range result {
+			if jira != nil {
+				if err := jira.BuildEmployee(e); err != nil {
+					log.Fatalln("unable to retrieve jira id:", err)
+				}
+			}
+
 			w.Write(cmdFlags.RecordFormat(cmdFlags.RecordBuilder(e)))
 		}
 

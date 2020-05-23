@@ -1,5 +1,7 @@
 package main
 
+// cspell:words jira
+
 import "fmt"
 
 func baseRecordBuilder(e *Employee) []interface{} {
@@ -18,6 +20,10 @@ func baseRecordBuilder(e *Employee) []interface{} {
 
 func regularRecordBuilder(e *Employee) []interface{} {
 	return append(baseRecordBuilder(e), e.ManagerMail)
+}
+
+func jiraRecordBuilder(e *Employee) []interface{} {
+	return append(baseRecordBuilder(e), e.JiraID, e.ManagerMail)
 }
 
 func stringsRecordFormat(i []interface{}) []string {
