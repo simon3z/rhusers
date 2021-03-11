@@ -17,20 +17,23 @@ func (p Profile) String() string {
 	return p.string
 }
 
+// EMailAddress represents an email address
+type EMailAddress string
+
 // Employee contains all the needed information about an employee
 type Employee struct {
 	UserID      Profile
 	JiraID      Profile
 	FirstName   string
 	LastName    string
-	Mail        []string
+	Mail        []EMailAddress
 	JobTitle    string
 	GeoArea     string
 	Location    string
 	CostCenter  string
 	Component   string
 	Subproduct  string
-	ManagerMail string
+	ManagerMail EMailAddress
 }
 
 // FullName returns the employee full name
@@ -43,7 +46,7 @@ func (e *Employee) FullName() string {
 }
 
 // PreferredMail returns the preferred email address
-func (e *Employee) PreferredMail() string {
+func (e *Employee) PreferredMail() EMailAddress {
 	if len(e.Mail) > 0 {
 		return e.Mail[0]
 	}

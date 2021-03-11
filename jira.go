@@ -38,7 +38,7 @@ func (j *JiraService) BuildEmployee(e *Employee) error {
 	b := j.GetBaseURL()
 
 	for _, a := range e.Mail {
-		users, res, err := j.User.Find(a)
+		users, res, err := j.User.Find(string(a))
 
 		if err != nil {
 			if res != nil {
@@ -48,7 +48,7 @@ func (j *JiraService) BuildEmployee(e *Employee) error {
 		}
 
 		for _, u := range users {
-			if u.EmailAddress != a {
+			if u.EmailAddress != string(a) {
 				continue
 			}
 

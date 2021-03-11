@@ -85,7 +85,7 @@ func main() {
 		if len(result) == 0 {
 			log.Println("employee not found:", query)
 			// empty record to maintain input and output rows alignment
-			result = []*Employee{{}}
+			result = []*Employee{{UserID: Profile{string: uid}}}
 		}
 
 		for _, e := range result {

@@ -94,9 +94,9 @@ func getPreferredMail(m map[string]string) string {
 	return m["rhatPrimaryMail"]
 }
 
-func (s *LDAPService) fetchManagerMail(managerUID string) (string, error) {
+func (s *LDAPService) fetchManagerMail(managerUID string) (EMailAddress, error) {
 	if managerMail, ok := s.cache[managerUID]; ok {
-		return managerMail, nil
+		return EMailAddress(managerMail), nil
 	}
 
 	search := strings.SplitN(managerUID, ",", 2)
@@ -123,7 +123,7 @@ func (s *LDAPService) fetchManagerMail(managerUID string) (string, error) {
 
 	s.cache[managerUID] = getPreferredMail(m)
 
-	return s.cache[managerUID], nil
+	return EMailAddress(s.cache[managerUID]), nil
 }
 
 // SearchEmployee searches and returns employees matching the search criteria provided
@@ -148,14 +148,14 @@ func (s *LDAPService) SearchEmployee(basedn, search string) ([]*Employee, error)
 			return nil, err
 		}
 
-		mail := []string{}
+		mail := []EMailAddress{}
 
 		if preferredMail, ok := m["rhatPreferredAlias"]; ok {
-			mail = append([]string{preferredMail}, mail...)
+			mail = append([]EMailAddress{EMailAddress(preferredMail)}, mail...)
 		}
 
 		if primaryMail, ok := m["rhatPrimaryMail"]; ok {
-			mail = append(mail, primaryMail)
+			mail = append(mail, EMailAddress(primaryMail))
 		}
 
 		userid := Profile{

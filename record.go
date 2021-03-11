@@ -2,7 +2,10 @@ package main
 
 // cspell:words jira
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 func baseRecordBuilder(e *Employee) []interface{} {
 	return []interface{}{
@@ -30,11 +33,18 @@ func stringsRecordFormat(i []interface{}) []string {
 	record := make([]string, len(i))
 
 	for k, v := range i {
+		r := reflect.ValueOf(v)
+
+		if r.Kind() == reflect.String {
+			record[k] = r.String()
+			continue
+		}
+
 		switch v.(type) {
-		case string:
-			record[k] = v.(string)
 		case fmt.Stringer:
 			record[k] = v.(fmt.Stringer).String()
+		default:
+			record[k] = "<unknown>"
 		}
 	}
 
@@ -50,6 +60,8 @@ func sheetRecordFormat(i []interface{}) []string {
 			if u.Link != nil {
 				record[k] = sheetRecordHyperlink(u.string, u.Link.String())
 			}
+		case EMailAddress:
+			record[k] = sheetRecordHyperlink(string(u), fmt.Sprintf("mailto:%s", u))
 		}
 	}
 
