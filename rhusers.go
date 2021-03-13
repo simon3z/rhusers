@@ -3,9 +3,9 @@ package main
 // cspell:words ldap deref rhat jira
 
 import (
-	"bufio"
 	"encoding/csv"
 	"flag"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -40,9 +40,11 @@ func main() {
 
 	log.SetFlags(0)
 
+	r := csv.NewReader(os.Stdin)
 	w := csv.NewWriter(os.Stdout)
 
 	if cmdFlags.GSheetsFormat {
+		r.Comma = '\t'
 		w.Comma = '\t'
 		cmdFlags.RecordFormat = sheetRecordFormat
 	}
@@ -70,10 +72,16 @@ func main() {
 		cmdFlags.RecordBuilder = jiraRecordBuilder
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		record, err := r.Read()
 
-	for scanner.Scan() {
-		uid := scanner.Text()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatalln("input parse error:", err)
+		}
+
+		uid := record[len(record)-1]
 
 		query := strings.ReplaceAll(cmdFlags.QueryString, "{}", string(uid))
 		result, err := ldap.SearchEmployee(cmdFlags.SearchBaseDN, query)
@@ -95,13 +103,9 @@ func main() {
 				}
 			}
 
-			w.Write(cmdFlags.RecordFormat(cmdFlags.RecordBuilder(e)))
+			w.Write(append(record[:len(record)-1], cmdFlags.RecordFormat(cmdFlags.RecordBuilder(e))...))
 		}
 
 		w.Flush()
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatalln("failed reading from standard input:", err)
 	}
 }
